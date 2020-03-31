@@ -21,11 +21,16 @@ class ExecConsumer(WebsocketConsumer):
     def disconnect(self, code):
         self.rds.close()
 
+    def get_response(self):
+        response = self.rds.brpop(self.token, timeout=5)
+        return response[1] if response else None
+
     def receive(self, **kwargs):
-        response = self.rds.blpop(self.token, timeout=5)
+        response = self.get_response()
         while response:
-            self.send(text_data=response[1].decode())
-            response = self.rds.blpop(self.token, timeout=5)
+            data = response.decode()
+            self.send(text_data=data)
+            response = self.get_response()
         self.send(text_data='pong')
 
 

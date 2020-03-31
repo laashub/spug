@@ -8,9 +8,10 @@ import json
 
 
 class User(models.Model, ModelMixin):
-    username = models.CharField(max_length=100, unique=True)
+    username = models.CharField(max_length=100)
     nickname = models.CharField(max_length=100)
     password_hash = models.CharField(max_length=100)  # hashed password
+    type = models.CharField(max_length=20, default='default')
     is_supper = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     access_token = models.CharField(max_length=32)
@@ -33,7 +34,7 @@ class User(models.Model, ModelMixin):
 
     @property
     def page_perms(self):
-        if self.role.page_perms:
+        if self.role and self.role.page_perms:
             data = []
             perms = json.loads(self.role.page_perms)
             for m, v in perms.items():
@@ -72,6 +73,7 @@ class Role(models.Model, ModelMixin):
         tmp = super().to_dict(*args, **kwargs)
         tmp['page_perms'] = json.loads(self.page_perms) if self.page_perms else None
         tmp['deploy_perms'] = json.loads(self.deploy_perms) if self.deploy_perms else None
+        tmp['used'] = self.user_set.count()
         return tmp
 
     def __repr__(self):

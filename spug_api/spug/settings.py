@@ -100,6 +100,7 @@ TEMPLATES = [
 
 SCHEDULE_KEY = 'spug:schedule'
 MONITOR_KEY = 'spug:monitor'
+REQUEST_KEY = 'spug:request'
 REPOS_DIR = os.path.join(BASE_DIR, 'repos')
 
 # Internationalization
@@ -119,6 +120,8 @@ AUTHENTICATION_EXCLUDES = (
     '/account/login/',
     re.compile('/apis/.*'),
 )
+
+SPUG_VERSION = 'v2.2.1'
 
 # override default config
 try:

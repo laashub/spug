@@ -17,6 +17,8 @@ import lds from 'lodash';
 class Ext1Index extends React.Component {
   constructor(props) {
     super(props);
+    this.id = props.match.params.id;
+    this.log = props.match.params.log;
     this.state = {
       fetching: true,
       loading: false,
@@ -25,10 +27,7 @@ class Ext1Index extends React.Component {
   }
 
   componentDidMount() {
-    this.id = this.props.match.params.id;
-    http.get(`/api/deploy/request/${this.id}/`)
-      .then(res => store.request = res)
-      .finally(() => this.setState({fetching: false}))
+    this.fetch()
   }
 
   componentWillUnmount() {
@@ -36,6 +35,31 @@ class Ext1Index extends React.Component {
     store.request = {targets: [], host_actions: [], server_actions: []};
     store.outputs = {};
   }
+
+  fetch = () => {
+    this.setState({fetching: true});
+    http.get(`/api/deploy/request/${this.id}/`, {params: {log: this.log}})
+      .then(res => {
+        store.request = res;
+        store.outputs = {};
+        while (res.outputs.length) {
+          const msg = JSON.parse(res.outputs.pop());
+          if (!store.outputs.hasOwnProperty(msg.key)) {
+            const data = msg.key === 'local' ? '读取数据...        ' : '';
+            store.outputs[msg.key] = {data}
+          }
+          this._parse_message(msg)
+        }
+      })
+      .finally(() => this.setState({fetching: false}))
+  };
+
+  _parse_message = (message) => {
+    const {key, data, step, status} = message;
+    if (data !== undefined) store.outputs[key]['data'] += data;
+    if (step !== undefined) store.outputs[key]['step'] = step;
+    if (status !== undefined) store.outputs[key]['status'] = status;
+  };
 
   handleDeploy = () => {
     this.setState({loading: true});
@@ -52,10 +76,7 @@ class Ext1Index extends React.Component {
           if (e.data === 'pong') {
             this.socket.send('ping')
           } else {
-            const {key, data, step, status} = JSON.parse(e.data);
-            if (data !== undefined) store.outputs[key]['data'] += data;
-            if (step !== undefined) store.outputs[key]['step'] = step;
-            if (status !== undefined) store.outputs[key]['status'] = status;
+            this._parse_message(JSON.parse(e.data))
           }
         }
       })
@@ -100,8 +121,13 @@ class Ext1Index extends React.Component {
             subTitle={`${app_name} - ${env_name}`}
             style={{padding: 0}}
             tags={this.getStatusAlias()}
-            extra={<Button loading={this.state.loading} type="primary" disabled={!['1', '-3'].includes(status)}
-                           onClick={this.handleDeploy}>发布</Button>}
+            extra={this.log ? (
+              <Button icon="sync" type="primary" onClick={this.fetch}>刷新</Button>
+            ) : (
+              <Button icon="play-circle" loading={this.state.loading} type="primary"
+                      disabled={!['1', '-3'].includes(status)}
+                      onClick={this.handleDeploy}>发布</Button>
+            )}
             onBack={() => history.goBack()}/>
           <Collapse defaultActiveKey={1} className={styles.collapse}>
             <Collapse.Panel showArrow={false} key={1} header={

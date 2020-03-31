@@ -35,6 +35,9 @@ class ComTable extends React.Component {
     title: '姓名',
     dataIndex: 'nickname',
   }, {
+    title: '类型',
+    dataIndex: 'type',
+  }, {
     title: '角色',
     dataIndex: 'role_name'
   }, {
@@ -52,7 +55,7 @@ class ComTable extends React.Component {
         <Divider type="vertical"/>
         <LinkButton className="span-button" onClick={() => store.showForm(info)}>编辑</LinkButton>
         <Divider type="vertical"/>
-        <LinkButton className="span-button" onClick={() => this.handleReset(info)}>重置密码</LinkButton>
+        <LinkButton disabled={info['type'] === 'ldap'} className="span-button" onClick={() => this.handleReset(info)}>重置密码</LinkButton>
         <Divider type="vertical"/>
         <LinkButton className="span-button" onClick={() => this.handleDelete(info)}>删除</LinkButton>
       </span>
